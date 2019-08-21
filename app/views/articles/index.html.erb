@@ -1,0 +1,73 @@
+<!doctype html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@7.3.1/themes/algolia-min.css" integrity="sha256-HB49n/BZjuqiCtQQf49OdZn63XuKFaxcIHWf0HNKte8=" crossorigin="anonymous">
+</head>
+<body>
+  <header>
+    <div id="search-box"></div>
+  </header>
+
+  <main>
+    <div id="hits"></div>
+    <div id="pagination"></div>
+  </main>
+
+  <script type="text/html" id="hit-template">
+    <div class="hit">
+      <p class="hit-name">
+        {{#helpers.highlight}}{ "attribute": "title" }{{/helpers.highlight}}
+        {{#helpers.highlight}}{ "attribute": "body" }{{/helpers.highlight}}
+      </p>
+    </div>
+  </script>
+  <input type='hidden' id="access-key" value=<%= ENV['ALGORIA_ACCESS_KEY_ID'] %>>
+  <input type='hidden' id="secret-access-key" value=<%= ENV['ALGORIA_SEARCH_ONLY_API_KEY'] %>>
+
+  <script src="https://cdn.jsdelivr.net/npm/algoliasearch@3.33.0/dist/algoliasearchLite.min.js" integrity="sha256-3Laj91VXexjTlFLgL8+vvIq27laXdRmFIcO2miulgEs=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/instantsearch.js@3.4.0/dist/instantsearch.production.min.js" integrity="sha256-pM0n88cBFRHpSn0N26ETsQdwpA7WAXJDvkHeCLh3ujI=" crossorigin="anonymous"></script>
+</body>
+
+<script>
+  const ALGORIA_ACCESS_KEY_ID = document.getElementById('access-key').value;
+  const ALGORIA_READ_ONLY_SECRET_ACCESS_KEY = document.getElementById('secret-access-key').value;
+
+  const searchClient = algoliasearch(
+    ALGORIA_ACCESS_KEY_ID,
+    ALGORIA_READ_ONLY_SECRET_ACCESS_KEY
+  );
+
+  const search = instantsearch({
+    indexName: 'test_ARTICLES',
+    searchClient,
+    routing: true,
+  });
+
+  search.addWidget(
+    instantsearch.widgets.configure({
+      hitsPerPage: 10
+    })
+  );
+
+  search.addWidget(
+    instantsearch.widgets.searchBox({
+      container: '#search-box',
+      placeholder: 'Search for contacts'
+    })
+  );
+
+  search.addWidget(
+    instantsearch.widgets.hits({
+      container: '#hits',
+      templates: {
+        item: document.getElementById('hit-template').innerHTML,
+        empty: `We didn't find any results for the search <em>"{{query}}"</em>`,
+      },
+      transformItems(items) {
+        return items.filter(item => item.content_type == 1);
+      }
+    })
+  );
+
+  search.start();
+</script>
